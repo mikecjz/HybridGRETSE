@@ -4,7 +4,7 @@ classdef TSE
         
         dG=170e-6; %Gradient rise time
                 
-        tEx=0.6e-3; %Exitation RF time
+        tEx=0.4e-3; %Exitation RF time
         tRef=0.4e-3; %Refocusing RF Time
         
         fspR= 1.0; %Readout spoiler (crusher) area factor

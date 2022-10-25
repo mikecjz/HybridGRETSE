@@ -25,8 +25,8 @@ TSE_scanParams.Nx = Nx;
 TSE_scanParams.Ny = Ny;
 TSE_scanParams.Nz = Nz;
 TSE_scanParams.nechos = 60;
-TSE_scanParams.samplingTime = 6.4e-3;
-TSE_scanParams.echoSpacing  = 12e-3;
+TSE_scanParams.samplingTime = 3e-3;
+TSE_scanParams.echoSpacing  = 6e-3;
 
 %% GRE parameters
 GRE_scanParams.fov = fov;
