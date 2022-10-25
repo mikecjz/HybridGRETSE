@@ -33,8 +33,6 @@ rf_ex  = mr.makeBlockPulse(90*pi/180,'system', system,'PhaseOffset',90*pi/180,'D
 
 
 
-
-
 clear seq
 
 seq=mr.Sequence(system);

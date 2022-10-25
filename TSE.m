@@ -5,7 +5,7 @@ classdef TSE
         dG=170e-6; %Gradient rise time
                 
         tEx=0.6e-3; %Exitation RF time
-        tRef=0.6e-3; %Refocusing RF Time
+        tRef=0.4e-3; %Refocusing RF Time
         
         fspR= 1.0; %Readout spoiler (crusher) area factor
         
@@ -254,7 +254,92 @@ classdef TSE
             
         end
         
+        %Append a VFL TSE block to the seq object
+        % INPUTS:
+        %  -(obj: reference to this TSE object itself)
+        %  - seq : The sequence object to be appended to
+        %  - pe_indices: [ky, kz] Array of kspace locations. size(pe_indices,1) should be equal to nechos
+        %  - system: system object (struct) keeping track of heardware limitations
+        % OUTPUTS:
+        %  - seq: appended seq object
         
+        function seq = AppendTSE_VFL_Block(obj,seq,system,pe_indices)
+           
+            nechos = obj.scanParams.nechos;
+            
+            if size(pe_indices,1) ~= nechos
+                error(['TSE Block append: size of pe_indices is not consistant with number of echos ',...
+                    '(',num2str(nechos),')'])
+            end
+            
+            ky_array = pe_indices(:,1);
+            kz_array = pe_indices(:,2);
+            
+            PE_area_array = obj.PE_area_steps(ky_array);
+            Par_area_array = obj.Par_area_steps(kz_array);
+            
+            faArray = TSE.CalculateVFLAngles(nechos,'generic');
+            
+            %A spoil gradient in PE Gradient
+            tPSpoil = 3000e-6;
+            GP_spoil = mr.makeTrapezoid('y',system,'duration',tPSpoil,'amplitude',system.maxGrad);%,'riseTime',obj.dG);
+            seq.addBlock(GP_spoil);
+            
+            %Add Excitation RF pulse and prephase readout gradient
+            seq.addBlock(obj.RFex);
+            seq.addBlock(obj.GR3);
+           
+            
+            %Add refocusing TSE train
+            for iEcho = 1:nechos
+                
+                tmpRFref = mr.makeBlockPulse(faArray(iEcho),system,'PhaseOffset',obj.rfref_phase,'Duration',obj.tRef);
+                
+                %Calculate phase and partition gradiatent from specified k-space location
+                GPpre = mr.makeTrapezoid('y',system,'Area',PE_area_array(iEcho),'Duration',obj.tSp,'riseTime',obj.dG);
+                GPrew = mr.makeTrapezoid('y',system,'Area',-PE_area_array(iEcho),'Duration',obj.tSp,'riseTime',obj.dG);
+                
+                GSpre = mr.makeTrapezoid('z',system,'Area',Par_area_array(iEcho),'Duration',obj.tSp,'riseTime',obj.dG);
+                GSrew = mr.makeTrapezoid('z',system,'Area',-Par_area_array(iEcho),'Duration',obj.tSp,'riseTime',obj.dG);
+                
+                %Add refocusing RF pulse and subsequent gradients
+                seq.addBlock(tmpRFref);
+                
+                seq.addBlock(obj.GR5,GPpre,GSpre);
+                seq.addBlock(obj.GR6,obj.ADC);
+                
+                seq.addBlock(obj.GR7,GPrew,GSrew);
+                
+            end
+            
+            
+        end
+        
+        
+        
+    end
+    
+    methods(Static)
+        %Outputs flip angles array in radian
+        function faArray = CalculateVFLAngles(nEchos, mode)
+            
+            if strcmp(mode,'generic')
+                nDecrease = 10;
+                VFLBounds = [120,180];% Degree
+                VFLRange = abs(VFLBounds(1)-VFLBounds(2));
+                
+                tempX = linspace(0,5,nDecrease);
+                
+                faDecrease = round(exp(-tempX)*VFLRange+min(VFLBounds(:)));
+                
+                faArray = min(VFLBounds(:))*ones(1,nEchos);
+                faArray(1:nDecrease) = faDecrease;
+                
+                faArray = faArray * pi/180;
+                
+            end
+            
+        end
     end
     
 end

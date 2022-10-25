@@ -34,6 +34,7 @@ classdef GRE
         RFex2 = []; %Second Set of RF object (default 1 degree)
         
         tSp = []; % Spoiler (crusher gradient) time in s
+        tPreph = []; % Prephasing gradient time in s
         
         
         GR3 = []; %Prephasing readout gradient
@@ -50,7 +51,7 @@ classdef GRE
     
     methods
         
-        %TSE object constructor
+        %GRE object constructor
         function obj = GRE(system,scanParams)
             
             if nargin == 1 
@@ -117,7 +118,8 @@ classdef GRE
             GRacq = mr.makeTrapezoid('x',system,'FlatArea',kxWidth,'FlatTime',obj.readoutTime);%,'riseTime',obj.dG);
             ROGradientTime = obj.readoutTime + GRacq.riseTime + GRacq.fallTime;
             
-            obj.tSp = 0.5 * (obj.scanParams.echoSpacing - ROGradientTime - obj.tExwd);
+            obj.tSp = 2/4 * (obj.scanParams.echoSpacing - ROGradientTime - obj.tExwd);
+            obj.tPreph = 2/4 * (obj.scanParams.echoSpacing - ROGradientTime - obj.tExwd);
             
             
             GRspr = mr.makeTrapezoid('x',system,'area',GRacq.area,'duration',obj.tSp);%,'riseTime',obj.dG);
@@ -126,7 +128,7 @@ classdef GRE
             
             AGRpreph = -1* GRacq.area/2;%GRacq.area*(1+fspR)/2;
             
-            GRpreph = mr.makeTrapezoid('x',system,'Area',AGRpreph,'duration',obj.tSp);%,'riseTime',obj.dG); %Prephase readout gradient
+            GRpreph = mr.makeTrapezoid('x',system,'Area',AGRpreph,'duration',obj.tPreph);%,'riseTime',obj.dG); %Prephase readout gradient
             
             
             %Readout objects calculation
@@ -198,11 +200,11 @@ classdef GRE
                 
                 
                 %Calculate phase and partition gradiatent from specified k-space location
-                GPpre = mr.makeTrapezoid('y',system,'Area',PE_area_array(iEcho),'Duration',obj.tSp);%,'riseTime',obj.dG);
-                GPrew = mr.makeTrapezoid('y',system,'Area',-PE_area_array(iEcho),'Duration',obj.tSp);%,'riseTime',obj.dG);
+                GPpre = mr.makeTrapezoid('y',system,'Area',PE_area_array(iEcho),'Duration',obj.tPreph);%,'riseTime',obj.dG);
+                GPrew = mr.makeTrapezoid('y',system,'Area',-PE_area_array(iEcho),'Duration',obj.tPreph);%,'riseTime',obj.dG);
                 
-                GSpre = mr.makeTrapezoid('z',system,'Area',Par_area_array(iEcho),'Duration',obj.tSp);%,'riseTime',obj.dG);
-                GSrew = mr.makeTrapezoid('z',system,'Area',-Par_area_array(iEcho),'Duration',obj.tSp);%,'riseTime',obj.dG);
+                GSpre = mr.makeTrapezoid('z',system,'Area',Par_area_array(iEcho),'Duration',obj.tPreph);%,'riseTime',obj.dG);
+                GSrew = mr.makeTrapezoid('z',system,'Area',-Par_area_array(iEcho),'Duration',obj.tPreph);%,'riseTime',obj.dG);
                 
                 seq.addBlock(obj.GR3, GPpre, GSpre); %Pre phase Gradients
                 

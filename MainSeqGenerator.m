@@ -1,3 +1,9 @@
+%% Include pulseq in path
+
+addpath('pulseq/matlab')
+
+%%
+
 system = mr.opts('MaxGrad', 35/sqrt(3),... 
                 'GradUnit', 'mT/m', ...
                 'MaxSlew', 190/sqrt(3),...
@@ -9,7 +15,7 @@ system = mr.opts('MaxGrad', 35/sqrt(3),...
             
 %% Global parameters
 fov = [256e-3, 256e-3, 256e-3];
-Nx = 256;
+Nx = 128;
 Ny = 128;
 Nz = 128;
 
@@ -31,7 +37,7 @@ GRE_scanParams.nechos = [150,150];
 GRE_scanParams.samplingTime = 3e-3;
 GRE_scanParams.echoSpacing = 6e-3;
 
-%%
+%% Caculate Spiral In trajectory
 nav_interval = 10;
 sp_k = 10;%spiral parameterk
 
@@ -41,13 +47,14 @@ ky = ky(:);
 kz = kz(:);
 
 
-% ky(:) = 65*ones(100000,1);
-% kz(:) = 65*ones(100000,1);
+ky(:) = 65*ones(100000,1);
+kz(:) = 65*ones(100000,1);
 %% Define sequence
 
 clear seq
 
-TRfill=5.0;
+% Define TR Gap in needed
+TRfill=10e-3;
 % round to gradient raster
 TRfill=system.gradRasterTime * round(TRfill / system.gradRasterTime);
 if TRfill<0, TRfill=1e-3; 
@@ -60,13 +67,13 @@ delayTR = mr.makeDelay(TRfill);
 seq=mr.Sequence(system);
 
 MT_TSE = TSE(system,TSE_scanParams);
-% MT_GRE = GRE(system,GRE_scanParams);
+MT_GRE = GRE(system,GRE_scanParams);
 
 tseEchos = TSE_scanParams.nechos;
 greEchos = sum(GRE_scanParams.nechos(:));
 totalEchos = tseEchos + greEchos;
 
-for iTR = 1:2
+for iTR = 1:10
     disp(iTR)
     gre_indices = (1:greEchos) + (iTR-1) * totalEchos;
     pe_indices_gre = [ky(gre_indices),kz(gre_indices)];
@@ -74,9 +81,9 @@ for iTR = 1:2
     tse_indices = ((greEchos+1):(greEchos+tseEchos)) + (iTR-1) * totalEchos;
     pe_indices_tse = [ky(tse_indices),kz(tse_indices)];
     
-%     seq = MT_GRE.AppendGREBlock(seq,system,pe_indices_gre);
+    seq = MT_GRE.AppendGREBlock(seq,system,pe_indices_gre);
     seq.addBlock(delayTR);
-    seq = MT_TSE.AppendTSEFIDBlock(seq,system,pe_indices_tse);
+    seq = MT_TSE.AppendTSEBlock(seq,system,pe_indices_tse);
     
    
     
@@ -94,5 +101,5 @@ end
 %% Write Sequence
 save_dir = '/mnt/radnas1/Junzhou/Scanner_Bins/PulseSeq';
 
-seq.write(fullfile(save_dir,'TSEFID12ES_spin.seq'))
+seq.write(fullfile(save_dir,'GRETSE_nav.seq'))
 % save('traj.mat','ky','kz')
