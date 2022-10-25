@@ -35,7 +35,7 @@ GRE_scanParams.Ny = Ny;
 GRE_scanParams.Nz = Nz;
 GRE_scanParams.nechos = [150,150];
 GRE_scanParams.samplingTime = 3e-3;
-GRE_scanParams.echoSpacing = 6e-3;
+GRE_scanParams.echoSpacing = 6e-3; 
 
 %% Caculate Spiral In trajectory
 nav_interval = 10;
@@ -47,8 +47,8 @@ ky = ky(:);
 kz = kz(:);
 
 
-ky(:) = 65*ones(100000,1);
-kz(:) = 65*ones(100000,1);
+% ky(:) = 65*ones(100000,1);
+% kz(:) = 65*ones(100000,1);
 %% Define sequence
 
 clear seq
@@ -101,5 +101,5 @@ end
 %% Write Sequence
 save_dir = '/mnt/radnas1/Junzhou/Scanner_Bins/PulseSeq';
 
-seq.write(fullfile(save_dir,'GRETSE_nav.seq'))
+seq.write(fullfile(save_dir,'GRETSE.seq'))
 % save('traj.mat','ky','kz')
