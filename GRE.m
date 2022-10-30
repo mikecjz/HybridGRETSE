@@ -78,8 +78,11 @@ classdef GRE
             
             %Enforce GO raster
             disp('Enforcing RO raster, sampling Time might be slightly changed')
-            obj.scanParams.samplingTime = round(obj.scanParams.samplingTime/obj.scanParams.Nx/system.gradRasterTime)...
-                * system.gradRasterTime * obj.scanParams.Nx;
+            obj.scanParams.samplingTime = ceil(obj.scanParams.samplingTime/obj.scanParams.Nx/system.adcRasterTime)...
+                * system.adcRasterTime * obj.scanParams.Nx;% ADC raster
+            
+            % Gradient raster
+            obj.scanParams.samplingTime = ceil(obj.scanParams.samplingTime./system.gradRasterTime) * system.gradRasterTime;
             
             obj.readoutTime = obj.scanParams.samplingTime + 2*system.adcDeadTime;
             

@@ -75,7 +75,7 @@ tseEchos = TSE_scanParams.nechos;
 greEchos = sum(GRE_scanParams.nechos(:));
 totalEchos = tseEchos + greEchos;
 
-for iTR = 1:400
+for iTR = 1:10
     disp(iTR)
     gre_indices = (1:greEchos) + (iTR-1) * totalEchos;
     pe_indices_gre = [ky(gre_indices),kz(gre_indices)];

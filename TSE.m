@@ -7,7 +7,7 @@ classdef TSE
         tEx=0.4e-3; %Exitation RF time
         tRef=0.4e-3; %Refocusing RF Time
         
-        fspR= 1.0; %Readout spoiler (crusher) area factor
+        fspR= 0.5; %Readout spoiler (crusher) area factor
         
         
         rfex_phase=pi/2; %Excitation RF phase
@@ -79,10 +79,13 @@ classdef TSE
             
             %========== Calculate TSE object properties ========
             
-            %Enforce GO raster
-            disp('Enforcing RO raster, sampling Time might be slightly changed')
-            obj.scanParams.samplingTime = round(obj.scanParams.samplingTime/obj.scanParams.Nx/system.gradRasterTime)...
-                * system.gradRasterTime * obj.scanParams.Nx;
+            %Enforce RO and adc raster
+            disp('Enforcing RO and adc raster, sampling Time might be slightly changed')
+            obj.scanParams.samplingTime = ceil(obj.scanParams.samplingTime/obj.scanParams.Nx/system.adcRasterTime)...
+                * system.adcRasterTime * obj.scanParams.Nx;% ADC raster
+            
+            % Gradient raster
+            obj.scanParams.samplingTime = ceil(obj.scanParams.samplingTime./system.gradRasterTime) * system.gradRasterTime;
             
             obj.readoutTime = obj.scanParams.samplingTime + 2*system.adcDeadTime;
             
@@ -140,6 +143,7 @@ classdef TSE
             obj.GR7 = mr.makeExtendedTrapezoid('x','times',GR7times,'amplitudes',GR7amp);
             
             obj.ADC = mr.makeAdc(obj.scanParams.Nx,'Duration',obj.scanParams.samplingTime, 'Delay', system.adcDeadTime);
+            obj.ADC.phaseOffset = pi/2; %Add ADC offset to match phase with GRE
             %Readout objects calculation END
             
             
@@ -324,8 +328,8 @@ classdef TSE
         function faArray = CalculateVFLAngles(nEchos, mode)
             
             if strcmp(mode,'generic')
-                nDecrease = 10;
-                VFLBounds = [120,180];% Degree
+                nDecrease = 15;
+                VFLBounds = [120,150];% Degree
                 VFLRange = abs(VFLBounds(1)-VFLBounds(2));
                 
                 tempX = linspace(0,5,nDecrease);
