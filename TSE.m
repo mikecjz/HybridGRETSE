@@ -1,3 +1,6 @@
+% TSE object of the hybrid GRE TSE sequence. Refer to the Main script for class construction and usage
+% Author Junzhou Chen @ UCLA
+% junzhouchen@ucla.edu
 classdef TSE 
     
     properties
@@ -7,7 +10,7 @@ classdef TSE
         tEx=0.4e-3; %Exitation RF time
         tRef=0.4e-3; %Refocusing RF Time
         
-        fspR= 0.5; %Readout spoiler (crusher) area factor
+        fspR= 1.0; %Readout spoiler (crusher) area factor
         
         
         rfex_phase=pi/2; %Excitation RF phase
@@ -268,6 +271,8 @@ classdef TSE
         %  - seq: appended seq object
         
         function seq = AppendTSE_VFL_Block(obj,seq,system,pe_indices)
+            
+            load('vfl_angles.mat')
            
             nechos = obj.scanParams.nechos;
             
@@ -282,7 +287,7 @@ classdef TSE
             PE_area_array = obj.PE_area_steps(ky_array);
             Par_area_array = obj.Par_area_steps(kz_array);
             
-            faArray = TSE.CalculateVFLAngles(nechos,'generic');
+            faArray = TSE.CalculateVFLAngles(nechos,'space');
             
             %A spoil gradient in PE Gradient
             tPSpoil = 3000e-6;
@@ -328,8 +333,8 @@ classdef TSE
         function faArray = CalculateVFLAngles(nEchos, mode)
             
             if strcmp(mode,'generic')
-                nDecrease = 15;
-                VFLBounds = [120,150];% Degree
+                nDecrease = 20;
+                VFLBounds = [60,180];% Degree
                 VFLRange = abs(VFLBounds(1)-VFLBounds(2));
                 
                 tempX = linspace(0,5,nDecrease);
@@ -341,6 +346,14 @@ classdef TSE
                 
                 faArray = faArray * pi/180;
                 
+            elseif strcmp(mode,'space')
+                load('vfl_angles.mat')
+                
+                if length(vfl_angles)~= nEchos
+                    error('Requested TSE echos does not match length from vfl_angles.mat')
+                end
+                
+                faArray = vfl_angles * pi/180;
             end
             
         end

@@ -1,3 +1,6 @@
+% GRE object of the hybrid GRE TSE sequence. Refer to the Main script for class construction and usage
+% Author Junzhou Chen @ UCLA
+% junzhouchen@ucla.edu
 classdef GRE 
     
     properties
